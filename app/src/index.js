@@ -1,4 +1,5 @@
 // Import de la feuille de style
-import './assets/css/style.css';
+import DaGame from './Game/Game';
 
-console.log( 'Allez, au boulot ! 🚀' );
+// Démarrage du jeu
+DaGame.start();
