@@ -1,4 +1,4 @@
-name: <<PROJECT_NAME>>
+name: golf_party
 
 services:
   # NodeJS
