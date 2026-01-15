@@ -5,8 +5,10 @@ import '../assets/css/style.css';
 import ballImgSrc from '../assets/img/ball.png';
 import holeImgSrc from '../assets/img/hole.png';
 import edgeImgSrc from '../assets/img/edge.png';
+import obstacleImgSrc from '../assets/img/obstacle.png'
 import Ball from './Ball';
 import GameObject from './GameObject';
+import Obstacle from './Obstacle';
 
 class Game {
     // Paramètres de configuration du jeu
@@ -20,7 +22,7 @@ class Game {
             orientation: 45,
             speed: 3,
             position: {
-                x: 300,
+                x: 275,
                 y: 600
             },
             angleAlteration: 30
@@ -28,11 +30,14 @@ class Game {
         hole: {
             radius: 20,
             position: {
-                x: 300,
+                x: 275,
                 y: 100
             }
         }
     };
+
+    // Données des niveaux 
+    levels;
 
     // Contexte de dessin du canvas
     ctx;
@@ -41,7 +46,8 @@ class Game {
     images = {
         ball: null,
         hole: null,
-        edge: null
+        edge: null,
+        obstacle: null
     };
 
     // State (un objet qui décrit l'état actuel du jeu, les balles, les trous, etc.)
@@ -52,12 +58,20 @@ class Game {
         bouncingEdges: [],
         // Trous
         holes: [],
+        // Obstacles
+        obstacles: [],
         // Entrées utilisateur
         userInput: {
             paddleLeft: false,
             paddleRight: false
         }
     };
+
+    constructor(customConfig = {}, levelsConfig = []) {
+        Object.assign(this.config, customConfig);
+
+        this.levels = levelsConfig;
+    }
 
     start() {
         console.log('Le jeu est lancé')
@@ -101,6 +115,11 @@ class Game {
         const imgEdge = new Image();
         imgEdge.src = edgeImgSrc;
         this.images.edge = imgEdge;
+
+        // Obstacle
+        const imgObstacle = new Image();
+        imgObstacle.src = obstacleImgSrc;
+        this.images.obstacle = imgObstacle;
     }
 
     // Mise en place des objets du jeu sur la scene
@@ -178,6 +197,15 @@ class Game {
 
         // Ajout dans la liste des bords
         this.state.bouncingEdges.push(edgeTop, edgeBottom, edgeRight, edgeLeft);
+
+        // Chargement des obstacles
+        const obstacle = new Obstacle(this.images.obstacle, 200, 70);
+        obstacle.setPosition(
+            200,
+            350
+        );
+
+        this.state.obstacles.push(obstacle)
     }
 
     renderObject() {
@@ -203,6 +231,11 @@ class Game {
         this.state.holes.forEach(theHole => {
             theHole.draw();
         });
+
+        // Dessin des obstacles
+        this.state.obstacles.forEach(theObstacle => {
+            theObstacle.draw();
+        })
     }
 
     loop() {
