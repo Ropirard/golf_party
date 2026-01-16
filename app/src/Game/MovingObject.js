@@ -33,6 +33,11 @@ export default class MovingObject extends GameObject {
     }
 
     update() {
+        // Limiter la vitesse 
+        if (this.maxSpeed !== undefined && this.speed > this.maxSpeed) {
+            this.speed = this.maxSpeed;
+        }
+
         let radOrientation = CustomMath.degToRad(this.orientation);
         this.velocity.x = this.speed * Math.cos(radOrientation);
         this.velocity.y = this.speed * Math.sin(radOrientation) * -1;

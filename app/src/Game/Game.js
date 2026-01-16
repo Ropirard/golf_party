@@ -25,6 +25,7 @@ class Game {
             radius: 20,
             orientation: 45,
             speed: 0,
+            maxSpeed: 12,
             position: {
                 x: 275,
                 y: 600
@@ -61,6 +62,9 @@ class Game {
 
     // Canvas element
     canvas;
+
+    // Élément HTML du niveau courant
+    currentLevelElement;
 
     // Images
     images = {
@@ -120,11 +124,13 @@ class Game {
         const elH1 = document.createElement('h1');
         elH1.textContent = 'Golf\' Party';
 
+        this.currentLevelElement = document.createElement('h1');
+        this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1);
+
         const elCanvas = document.createElement('canvas');
         elCanvas.width = this.config.canvasSize.width;
         elCanvas.height = this.config.canvasSize.height;
-
-        document.body.append(elH1, elCanvas);
+        document.body.append(elH1, this.currentLevelElement, elCanvas);
 
         // Récupération du contexte du canvas
         this.canvas = elCanvas;
@@ -171,7 +177,8 @@ class Game {
             this.images.ball,
             ballDiamater, ballDiamater,
             this.config.ball.orientation,
-            this.config.ball.speed
+            this.config.ball.speed,
+            this.config.ball.maxSpeed
         );
         ball.setPosition(
             this.config.ball.position.x,
@@ -282,11 +289,17 @@ class Game {
         // Incrémenter l'index du niveau
         this.currentLevelIndex++;
 
+
         // Vérifier si on a atteint la fin des niveaux
         if (this.currentLevelIndex >= this.levels.length) {
             console.log('Tous les niveaux sont terminés !');
             // Optionnel: revenir au premier niveau
             this.currentLevelIndex = 0;
+        }
+
+        // Mettre à jour l'affichage du niveau
+        if (this.currentLevelElement) {
+            this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1);
         }
 
         // Charger la nouvelle configuration du niveau
@@ -298,14 +311,13 @@ class Game {
 
         // Réinitialiser les objets du jeu avec le nouveau niveau
         this.initGameObjects();
-
-        console.log(`Niveau ${this.currentLevelIndex + 1} chargé`);
     }
 
     // -- Collisions et calculs --
     checkCollision() {
         // Collision de la balle avec les objets
         let savedBalls = [];
+        let levelChanged = false;
         this.state.balls.forEach(theBall => {
             savedBalls.push(theBall)
 
@@ -367,12 +379,16 @@ class Game {
                         savedBalls.splice(index, 1);
                         // Passer au niveau suivant
                         this.loadNextLevel();
+                        levelChanged = true;
                     }
                 }
             })
         });
 
-        this.state.balls = savedBalls;
+        // Ne pas écraser le tableau de balles si le niveau a changé
+        if (!levelChanged) {
+            this.state.balls = savedBalls;
+        }
     }
 
     updateObject() {
