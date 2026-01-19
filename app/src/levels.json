@@ -88,16 +88,16 @@
         "id": 2,
         "name": "Par 2",
         "canvasSize": {
-            "width": 800,
-            "height": 1000
+            "width": 600,
+            "height": 800
         },
         "ball": {
             "radius": 20,
             "orientation": 45,
             "speed": 0,
             "position": {
-                "x": 275,
-                "y": 600
+                "x": 400,
+                "y": 650
             }
         },
         "hole": {
@@ -105,7 +105,7 @@
             "orientation": 0,
             "speed": 0,
             "position": {
-                "x": 275,
+                "x": 175,
                 "y": 120
             }
         },
@@ -158,12 +158,22 @@
         "obstacles": [
             {
                 "position": {
-                    "x": 200,
-                    "y": 350
+                    "x": 20,
+                    "y": 250
                 },
                 "size": {
-                    "width": 200,
-                    "height": 70
+                    "width": 400,
+                    "height": 80
+                }
+            },
+            {
+                "position": {
+                    "x": 180,
+                    "y": 480
+                },
+                "size": {
+                    "width": 400,
+                    "height": 80
                 }
             }
         ]

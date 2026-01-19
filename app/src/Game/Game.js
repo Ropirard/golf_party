@@ -96,7 +96,11 @@ class Game {
             currentPos: new Vector(),
             power: 0,
             maxPower: 15
-        }
+        },
+        // Nombre de coups sur le niveau
+        strokeCount: 0,
+        // Nombre de coups total
+        totalStrokeCount: 0
     };
 
     constructor(customConfig = {}, levelsConfig = defaultLevels) {
@@ -125,7 +129,9 @@ class Game {
         elH1.textContent = 'Golf\' Party';
 
         this.currentLevelElement = document.createElement('h1');
-        this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1);
+        this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + this.state.strokeCount + ' - Total Coups: ' + this.state.totalStrokeCount;
+
+
 
         const elCanvas = document.createElement('canvas');
         elCanvas.width = this.config.canvasSize.width;
@@ -297,9 +303,12 @@ class Game {
             this.currentLevelIndex = 0;
         }
 
+        // Réinitialiser le compteur de coups du niveau
+        this.state.strokeCount = 0;
+
         // Mettre à jour l'affichage du niveau
         if (this.currentLevelElement) {
-            this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1);
+            this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + this.state.strokeCount + ' - Total Coups: ' + this.state.totalStrokeCount;
         }
 
         // Charger la nouvelle configuration du niveau
@@ -464,6 +473,13 @@ class Game {
         ball.orientation = CustomMath.normalizedAngle(angleDeg);
         ball.speed = this.state.shooting.power;
         this.state.shooting.power = 0;
+
+        // Incrémenter les compteurs de coups
+        this.state.totalStrokeCount++;
+        this.state.strokeCount++;
+        if (this.currentLevelElement) {
+            this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + this.state.strokeCount + ' - Total Coups: ' + this.state.totalStrokeCount;
+        }
     }
 
     // Dessiner la ligne de visée
