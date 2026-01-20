@@ -51,6 +51,15 @@ class Game {
     // Overrides fournis au constructeur
     customConfig = {};
 
+    // Configuration des joueurs (par défaut 2 joueurs mais on peut en ajouter voir n'en gérer qu'un seul)
+    players = [
+        { id: 1, name: 'Joueur 1', strokes: 0, totalStrokeCount: 0 },
+        { id: 2, name: 'Joueur 2', strokes: 0, totalStrokeCount: 0 }
+    ];
+
+    // Index du joueur courant
+    currentPlayerIndex = 0;
+
     // Données des niveaux
     levels = [];
 
@@ -129,7 +138,7 @@ class Game {
         elH1.textContent = 'Golf\' Party';
 
         this.currentLevelElement = document.createElement('h1');
-        this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + this.state.strokeCount + ' - Total Coups: ' + this.state.totalStrokeCount;
+        this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1) + ' - Joueur ' + ' - Coups: ' + this.state.strokeCount + ' - Total Coups: ' + this.state.totalStrokeCount;
 
 
 
@@ -256,33 +265,6 @@ class Game {
             edges: level.edges ?? overrides.edges ?? base.edges,
             obstacles: level.obstacles ?? overrides.obstacles ?? base.obstacles
         };
-    }
-
-    // Bordures rectangulaires par défaut (si rien n'est précisé dans levels.json)
-    buildDefaultEdges() {
-        const thickness = 20;
-        return [
-            {
-                tag: 'TopEdge',
-                position: { x: 0, y: 0 },
-                size: { width: this.config.canvasSize.width, height: thickness }
-            },
-            {
-                tag: 'BottomEdge',
-                position: { x: 0, y: this.config.canvasSize.height - thickness },
-                size: { width: this.config.canvasSize.width, height: thickness }
-            },
-            {
-                tag: 'RightEdge',
-                position: { x: this.config.canvasSize.width - thickness, y: 0 },
-                size: { width: thickness, height: this.config.canvasSize.height }
-            },
-            {
-                tag: 'LeftEdge',
-                position: { x: 0, y: 0 },
-                size: { width: thickness, height: this.config.canvasSize.height }
-            }
-        ];
     }
 
     // Clone simple pour éviter les effets de bord lors du merge
