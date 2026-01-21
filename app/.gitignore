@@ -1,3 +1,27 @@
 node_modules
 package-lock.json
 dist
+
+const numberOfPlayers = document.createElement('select');
+        numberOfPlayers.id = 'numberOfPlayers';
+        for (let i = 1; i <= 4; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i + (i === 1 ? ' Joueur' : ' Joueurs');
+            numberOfPlayers.appendChild(option);
+        }
+        numberOfPlayers.addEventListener('change', (e) => {
+            const selectedValue = parseInt(e.target.value, 10);
+            // Mettre à jour la liste des joueurs
+            this.players = [];
+            for (let i = 1; i <= selectedValue; i++) {
+                this.players.push({
+                    id: i,
+                    name: 'Joueur ' + i,
+                    state: {
+                        strokeCount: 0,
+                        totalStrokeCount: 0
+                    }
+                });
+            }
+        });

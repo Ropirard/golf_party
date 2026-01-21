@@ -50,25 +50,7 @@ class Game {
 
     // Overrides fournis au constructeur
     customConfig = {};
-
-    // Configuration des joueurs (par défaut 2 joueurs mais on peut en ajouter voir n'en gérer qu'un seul)
-    players = [
-        {
-            id: 1, name: 'Joueur 1',
-            state: {
-                strokeCount: 0,        // Coups sur le niveau actuel
-                totalStrokeCount: 0    // Coups totaux de ce joueur
-            }
-        },
-        {
-            id: 2, name: 'Joueur 2',
-            state: {
-                strokeCount: 0,
-                totalStrokeCount: 0
-            }
-        }
-    ];
-
+    
     // Index du joueur courant
     currentPlayerIndex = 0;
 
@@ -578,6 +560,32 @@ class Game {
 
         const title = document.createElement('h1');
         title.textContent = 'Golf\' Party';
+
+        const numberOfPlayers = document.createElement('select')
+        numberOfPlayers.id = 'number-of-players';
+        for(let i = 1; i <= 4; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i + (i === 1 ? ' Joueur' : ' Joueurs');
+            numberOfPlayers.appendChild(option);
+        }
+
+        numberOfPlayers.addEventListener('change', (e) => {
+            const selectedValue = parseInt(e.target.value, 10);
+            this.players = [];
+            for(let i = 1; i <= selectedValue; i++) {
+                this.players.push({
+                    id: i,
+                    name: 'Joueur ' + i,
+                    state: {
+                        strokeCount: 0,
+                        totalStrokeCount: 0
+                    }
+                });
+            }
+        })
+
+        modalContent.appendChild(numberOfPlayers);
 
         const startButton = document.createElement('button');
         startButton.id = 'startButton';
