@@ -53,8 +53,20 @@ class Game {
 
     // Configuration des joueurs (par défaut 2 joueurs mais on peut en ajouter voir n'en gérer qu'un seul)
     players = [
-        { id: 1, name: 'Joueur 1', strokes: 0, totalStrokeCount: 0 },
-        { id: 2, name: 'Joueur 2', strokes: 0, totalStrokeCount: 0 }
+        {
+            id: 1, name: 'Joueur 1',
+            state: {
+                strokeCount: 0,        // Coups sur le niveau actuel
+                totalStrokeCount: 0    // Coups totaux de ce joueur
+            }
+        },
+        {
+            id: 2,
+            name: 'Joueur 2', state: {
+                strokeCount: 0,
+                totalStrokeCount: 0
+            }
+        }
     ];
 
     // Index du joueur courant
@@ -105,11 +117,7 @@ class Game {
             currentPos: new Vector(),
             power: 0,
             maxPower: 15
-        },
-        // Nombre de coups sur le niveau
-        strokeCount: 0,
-        // Nombre de coups total
-        totalStrokeCount: 0
+        }
     };
 
     constructor(customConfig = {}, levelsConfig = defaultLevels) {
@@ -138,7 +146,8 @@ class Game {
         elH1.textContent = 'Golf\' Party';
 
         this.currentLevelElement = document.createElement('h1');
-        this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1) + ' - Joueur ' + ' - Coups: ' + this.state.strokeCount + ' - Total Coups: ' + this.state.totalStrokeCount;
+        const currentPlayer = this.players[this.currentPlayerIndex];
+        this.currentLevelElement.textContent = 'Joueur ' + (this.currentPlayerIndex + 1) + ' - Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + currentPlayer.state.strokeCount + ' - Total Coups: ' + currentPlayer.state.totalStrokeCount;
 
 
 
@@ -274,23 +283,15 @@ class Game {
 
     // Charger le niveau suivant
     loadNextLevel() {
-        // Incrémenter l'index du niveau
-        this.currentLevelIndex++;
+        this.switchPlayer();
 
-
-        // Vérifier si on a atteint la fin des niveaux
-        if (this.currentLevelIndex >= this.levels.length) {
-            console.log('Tous les niveaux sont terminés !');
-            // Optionnel: revenir au premier niveau
-            this.currentLevelIndex = 0;
-        }
-
-        // Réinitialiser le compteur de coups du niveau
-        this.state.strokeCount = 0;
+        // Réinitialiser le compteur de coups du niveau pour le nouveau joueur
+        const currentPlayer = this.players[this.currentPlayerIndex];
+        currentPlayer.state.strokeCount = 0;
 
         // Mettre à jour l'affichage du niveau
         if (this.currentLevelElement) {
-            this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + this.state.strokeCount + ' - Total Coups: ' + this.state.totalStrokeCount;
+            this.currentLevelElement.textContent = 'Joueur ' + (this.currentPlayerIndex + 1) + ' - Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + currentPlayer.state.strokeCount + ' - Total Coups: ' + currentPlayer.state.totalStrokeCount;
         }
 
         // Charger la nouvelle configuration du niveau
@@ -302,6 +303,18 @@ class Game {
 
         // Réinitialiser les objets du jeu avec le nouveau niveau
         this.initGameObjects();
+    }
+
+    switchPlayer() {
+        if (this.currentPlayerIndex === this.players.length - 1 && this.currentLevelIndex !== this.levels.length - 1) {
+            // Si on est au dernier joueur et qu'il reste des niveaux, revenir au premier joueur
+            this.currentLevelIndex++;
+            this.currentPlayerIndex = 0;
+            return this.players[this.currentPlayerIndex];
+        }
+        const player = this.players[this.currentPlayerIndex];
+        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+        return player;
     }
 
     // -- Collisions et calculs --
@@ -456,11 +469,12 @@ class Game {
         ball.speed = this.state.shooting.power;
         this.state.shooting.power = 0;
 
-        // Incrémenter les compteurs de coups
-        this.state.totalStrokeCount++;
-        this.state.strokeCount++;
+        // Incrémenter les compteurs de coups du joueur courant
+        const currentPlayer = this.players[this.currentPlayerIndex];
+        currentPlayer.state.totalStrokeCount++;
+        currentPlayer.state.strokeCount++;
         if (this.currentLevelElement) {
-            this.currentLevelElement.textContent = 'Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + this.state.strokeCount + ' - Total Coups: ' + this.state.totalStrokeCount;
+            this.currentLevelElement.textContent = 'Joueur ' + (this.currentPlayerIndex + 1) + ' - Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + currentPlayer.state.strokeCount + ' - Total Coups: ' + currentPlayer.state.totalStrokeCount;
         }
     }
 
