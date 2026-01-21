@@ -61,8 +61,8 @@ class Game {
             }
         },
         {
-            id: 2,
-            name: 'Joueur 2', state: {
+            id: 2, name: 'Joueur 2',
+            state: {
                 strokeCount: 0,
                 totalStrokeCount: 0
             }
@@ -129,6 +129,10 @@ class Game {
 
     start() {
         console.log('Le jeu est lancé')
+        if (this.menuOverlay) {
+            this.menuOverlay.remove();
+            this.menuOverlay = null;
+        }
         // Recalcule la config active au moment du démarrage (si currentLevelIndex a été modifié)
         this.config = this.buildMergedConfig(this.levels[this.currentLevelIndex] || {}, this.customConfig);
         // Initialisation de l'interface HTML
@@ -142,8 +146,8 @@ class Game {
     }
 
     initHtmlUI() {
-        const elH1 = document.createElement('h1');
-        elH1.textContent = 'Golf\' Party';
+        this.elH1 = document.createElement('h1');
+        this.elH1.textContent = 'Golf\' Party';
 
         this.currentLevelElement = document.createElement('h1');
         const currentPlayer = this.players[this.currentPlayerIndex];
@@ -154,7 +158,7 @@ class Game {
         const elCanvas = document.createElement('canvas');
         elCanvas.width = this.config.canvasSize.width;
         elCanvas.height = this.config.canvasSize.height;
-        document.body.append(elH1, this.currentLevelElement, elCanvas);
+        document.body.append(this.elH1, this.currentLevelElement, elCanvas);
 
         // Récupération du contexte du canvas
         this.canvas = elCanvas;
@@ -285,6 +289,11 @@ class Game {
     loadNextLevel() {
         this.switchPlayer();
 
+        // Si le jeu est terminé (switchPlayer a retourné null), on ne continue pas
+        if (this.currentPlayerIndex === null || this.currentLevelIndex >= this.levels.length) {
+            return;
+        }
+
         // Réinitialiser le compteur de coups du niveau pour le nouveau joueur
         const currentPlayer = this.players[this.currentPlayerIndex];
         currentPlayer.state.strokeCount = 0;
@@ -298,8 +307,10 @@ class Game {
         this.config = this.buildMergedConfig(this.levels[this.currentLevelIndex] || {}, this.customConfig);
 
         // Redimensionner le canvas si nécessaire
-        this.canvas.width = this.config.canvasSize.width;
-        this.canvas.height = this.config.canvasSize.height;
+        if (this.canvas) {
+            this.canvas.width = this.config.canvasSize.width;
+            this.canvas.height = this.config.canvasSize.height;
+        }
 
         // Réinitialiser les objets du jeu avec le nouveau niveau
         this.initGameObjects();
@@ -311,6 +322,14 @@ class Game {
             this.currentLevelIndex++;
             this.currentPlayerIndex = 0;
             return this.players[this.currentPlayerIndex];
+        } else if (this.currentPlayerIndex === this.players.length - 1 && this.currentLevelIndex === this.levels.length - 1) {
+            // Supprimer le canvas avant d'afficher le modal de fin
+            if (this.canvas) {
+                this.canvas.remove();
+                this.canvas = null;
+            }
+            this.createEndingModal();
+            return null;
         }
         const player = this.players[this.currentPlayerIndex];
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
@@ -548,6 +567,89 @@ class Game {
 
         // Appel de la frame suivant
         requestAnimationFrame(this.loop.bind(this));
+    }
+
+    createStartingModal() {
+        this.menuOverlay = document.createElement('div');
+        this.menuOverlay.id = 'menuOverlay';
+
+        const modalContent = document.createElement('div');
+        modalContent.id = 'modalContent';
+
+        const title = document.createElement('h1');
+        title.textContent = 'Golf\' Party';
+
+        const startButton = document.createElement('button');
+        startButton.id = 'startButton';
+        startButton.textContent = 'Démarrer le jeu';
+        startButton.addEventListener('click', () => {
+            this.start();
+        });
+
+        modalContent.appendChild(title);
+        modalContent.appendChild(startButton);
+        this.menuOverlay.appendChild(modalContent);
+        document.body.appendChild(this.menuOverlay);
+    }
+
+    createEndingModal() {
+        // Supprimer le titre "Golf' Party"
+        if (this.elH1) {
+            this.elH1.remove();
+            this.elH1 = null;
+        }
+        // Supprimer les infos de niveau et coups
+        if (this.currentLevelElement) {
+            this.currentLevelElement.remove();
+            this.currentLevelElement = null;
+        }
+
+        const endModal = document.createElement('div');
+        endModal.id = 'start-modal'; // On réutilise le style du start-modal
+
+        const modalContent = document.createElement('div');
+        modalContent.id = 'div-modal-content';
+
+        const title = document.createElement('h1');
+        title.textContent = 'Fin de la partie !';
+
+        const backToMenu = document.createElement('button');
+        backToMenu.id = 'buttonStart';
+        backToMenu.textContent = 'MENU PRINCIPAL';
+        backToMenu.addEventListener('click', () => {
+            // Supprimer le endingModal
+            endModal.remove();
+            // Réinitialiser les états des joueurs
+            this.currentLevelIndex = 0;
+            this.currentPlayerIndex = 0;
+            this.players.forEach(player => {
+                player.state.strokeCount = 0;
+                player.state.totalStrokeCount = 0;
+            });
+            // Afficher le startingModal
+            this.createStartingModal();
+        });
+
+        const restartButton = document.createElement('button');
+        restartButton.id = 'buttonStart';
+        restartButton.textContent = 'REJOUER';
+        restartButton.addEventListener('click', () => {
+            // Supprimer le endingModal
+            endModal.remove();
+            // Réinitialiser les états des joueurs
+            this.currentLevelIndex = 0;
+            this.currentPlayerIndex = 0;
+            this.players.forEach(player => {
+                player.state.strokeCount = 0;
+                player.state.totalStrokeCount = 0;
+            });
+            // Démarrer une nouvelle partie
+            this.start();
+        });
+
+        modalContent.append(title, backToMenu, restartButton);
+        endModal.appendChild(modalContent);
+        document.body.appendChild(endModal);
     }
 }
 

@@ -2,4 +2,4 @@
 import DaGame from './Game/Game';
 
 // Démarrage du jeu
-DaGame.start();
+DaGame.createStartingModal();
