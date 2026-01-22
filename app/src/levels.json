@@ -1,7 +1,89 @@
 [
     {
+        "id": 3,
+        "canvasSize": {
+            "width": 1500,
+            "height": 800
+        },
+        "ball": {
+            "radius": 20,
+            "orientation": 45,
+            "speed": 0,
+            "position": {
+                "x": 150,
+                "y": 375
+            }
+        },
+        "hole": {
+            "radius": 20,
+            "orientation": 0,
+            "speed": 0,
+            "position": {
+                "x": 1275,
+                "y": 375
+            }
+        },
+        "edges": [
+            {
+                "tag": "TopEdge",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                },
+                "size": {
+                    "width": 1500,
+                    "height": 20
+                }
+            },
+            {
+                "tag": "BottomEdge",
+                "position": {
+                    "x": 0,
+                    "y": 780
+                },
+                "size": {
+                    "width": 1500,
+                    "height": 20
+                }
+            },
+            {
+                "tag": "RightEdge",
+                "position": {
+                    "x": 1480,
+                    "y": 0
+                },
+                "size": {
+                    "width": 20,
+                    "height": 800
+                }
+            },
+            {
+                "tag": "LeftEdge",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                },
+                "size": {
+                    "width": 20,
+                    "height": 800
+                }
+            }
+        ],
+        "killingWaters": [
+            {
+                "position": {
+                    "x": 250,
+                    "y": 400
+                },
+                "size": {
+                    "width": 60,
+                    "height": 60
+                }
+            }
+        ]
+    },
+    {
         "id": 1,
-        "name": "Par 1",
         "canvasSize": {
             "width": 600,
             "height": 800
@@ -79,14 +161,14 @@
                 "size": {
                     "width": 200,
                     "height": 70
-                }
+                },
+                "isMoving": false
             }
         ]
     },
 
     {
         "id": 2,
-        "name": "Par 2",
         "canvasSize": {
             "width": 600,
             "height": 800
@@ -164,7 +246,8 @@
                 "size": {
                     "width": 400,
                     "height": 80
-                }
+                },
+                "isMoving": true
             },
             {
                 "position": {
@@ -174,7 +257,8 @@
                 "size": {
                     "width": 400,
                     "height": 80
-                }
+                },
+                "isMoving": true
             }
         ]
     }

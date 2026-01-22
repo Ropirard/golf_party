@@ -6,13 +6,15 @@ import defaultLevels from '../levels.json'
 import ballImgSrc from '../assets/img/ball.png';
 import holeImgSrc from '../assets/img/hole.png';
 import edgeImgSrc from '../assets/img/edge.png';
-import obstacleImgSrc from '../assets/img/obstacle.png'
+import obstacleImgSrc from '../assets/img/obstacle.png';
+import killingWaterImgSrc from '../assets/img/killingWater.png'
 import Ball from './Ball';
 import GameObject from './GameObject';
 import Obstacle from './Obstacle';
 import Vector from './DataType/Vector';
 import CustomMath from './CustomMath';
 import CollisionType from './DataType/CollisionType';
+import KillingWater from './KillingWater';
 
 class Game {
     // Paramètres par défaut du jeu
@@ -42,15 +44,16 @@ class Game {
             }
         },
         edges: null,
-        obstacles: []
-    };
+        obstacles: [],
+        killingWaters: []
+    }
 
     // Configuration active (remplie à partir des niveaux)
     config = null;
 
     // Overrides fournis au constructeur
     customConfig = {};
-    
+
     // Index du joueur courant
     currentPlayerIndex = 0;
 
@@ -66,6 +69,9 @@ class Game {
     // Canvas element
     canvas;
 
+    // Identifiant de la boucle d'animation en cours
+    animationFrameId = null;
+
     // Élément HTML du niveau courant
     currentLevelElement;
 
@@ -74,7 +80,8 @@ class Game {
         ball: null,
         hole: null,
         edge: null,
-        obstacle: null
+        obstacle: null,
+        killingWater: null
     };
 
     // State (un objet qui décrit l'état actuel du jeu, les balles, les trous, etc.)
@@ -87,6 +94,7 @@ class Game {
         holes: [],
         // Obstacles
         obstacles: [],
+        killingWaters: [],
         // Entrées utilisateur
         userInput: {
             paddleLeft: false,
@@ -107,10 +115,24 @@ class Game {
         this.levels = Array.isArray(levelsConfig) ? levelsConfig : levelsConfig?.data || [];
         this.customConfig = customConfig;
         this.config = this.buildMergedConfig(this.levels[this.currentLevelIndex] || {}, this.customConfig);
+
+        // Initialisation par défaut avec 1 joueur
+        this.players = [{
+            id: 1,
+            name: 'Joueur 1',
+            state: {
+                strokeCount: 0,
+                totalStrokeCount: 0
+            }
+        }];
+
+        // Préserver le bon contexte pour la boucle d'animation
+        this.loop = this.loop.bind(this);
     }
 
     start() {
         console.log('Le jeu est lancé')
+        this.stopLoop();
         if (this.menuOverlay) {
             this.menuOverlay.remove();
             this.menuOverlay = null;
@@ -124,7 +146,7 @@ class Game {
         // Initialisation des objets du jeu
         this.initGameObjects();
         // Lancement de la boucle
-        requestAnimationFrame(this.loop.bind(this));
+        this.animationFrameId = requestAnimationFrame(this.loop);
     }
 
     initHtmlUI() {
@@ -171,6 +193,11 @@ class Game {
         const imgObstacle = new Image();
         imgObstacle.src = obstacleImgSrc;
         this.images.obstacle = imgObstacle;
+
+        // Eau
+        const imgKillingWater = new Image();
+        imgKillingWater.src = killingWaterImgSrc;
+        this.images.killingWater = imgKillingWater;
     }
 
     // Mise en place des objets du jeu sur la scene
@@ -231,10 +258,18 @@ class Game {
         // Chargement des obstacles définis pour le niveau
         const obstacleDataList = Array.isArray(this.config.obstacles) ? this.config.obstacles : [];
         obstacleDataList.forEach(obstacleData => {
+            const isMoving = !!obstacleData.isMoving;
+            const speed = obstacleData.speed ?? (isMoving ? 2 : 0);
+            const orientation = obstacleData.orientation ?? 0;
+            const rotation = obstacleData.rotation ?? 0;
             const obstacle = new Obstacle(
                 this.images.obstacle,
                 obstacleData.size.width,
-                obstacleData.size.height
+                obstacleData.size.height,
+                orientation,
+                speed,
+                isMoving,
+                rotation
             );
             obstacle.setPosition(
                 obstacleData.position.x,
@@ -244,6 +279,54 @@ class Game {
 
             this.state.obstacles.push(obstacle);
         });
+
+        const killingWaterDataList = Array.isArray(this.config.killingWaters) ? this.config.killingWaters : [];
+        killingWaterDataList.forEach(killingWaterData => {
+            const killingWater = new Obstacle(
+                this.images.killingWater,
+                killingWaterData.size.width,
+                killingWaterData.size.height
+            );
+            killingWater.setPosition(
+                killingWaterData.position.x,
+                killingWaterData.position.y
+            );
+            this.state.killingWaters.push(killingWater);
+        })
+    }
+
+    // Crée les bordures par défaut (contours du canvas)
+    buildDefaultEdges() {
+        const width = this.config.canvasSize.width;
+        const height = this.config.canvasSize.height;
+        const edgeThickness = 10;
+
+        return [
+            // Bordure supérieure
+            {
+                size: { width: width, height: edgeThickness },
+                position: { x: 0, y: 0 },
+                tag: 'top'
+            },
+            // Bordure inférieure
+            {
+                size: { width: width, height: edgeThickness },
+                position: { x: 0, y: height - edgeThickness },
+                tag: 'bottom'
+            },
+            // Bordure gauche
+            {
+                size: { width: edgeThickness, height: height },
+                position: { x: 0, y: 0 },
+                tag: 'left'
+            },
+            // Bordure droite
+            {
+                size: { width: edgeThickness, height: height },
+                position: { x: width - edgeThickness, y: 0 },
+                tag: 'right'
+            }
+        ];
     }
 
     // Construit la configuration finale à partir du niveau et d'éventuels overrides
@@ -258,7 +341,8 @@ class Game {
             ball: { ...base.ball, ...level.ball, ...overrides.ball },
             hole: { ...base.hole, ...level.hole, ...overrides.hole },
             edges: level.edges ?? overrides.edges ?? base.edges,
-            obstacles: level.obstacles ?? overrides.obstacles ?? base.obstacles
+            obstacles: level.obstacles ?? overrides.obstacles ?? base.obstacles,
+            killingWaters: level.killingWaters ?? overrides.killingWaters ?? base.killingWaters
         };
     }
 
@@ -305,6 +389,7 @@ class Game {
             this.currentPlayerIndex = 0;
             return this.players[this.currentPlayerIndex];
         } else if (this.currentPlayerIndex === this.players.length - 1 && this.currentLevelIndex === this.levels.length - 1) {
+            this.stopLoop();
             // Supprimer le canvas avant d'afficher le modal de fin
             if (this.canvas) {
                 this.canvas.remove();
@@ -346,8 +431,8 @@ class Game {
             })
 
             // Collision de la balle avec les obstacles
-            this.state.obstacles.forEach(theObstacle => {
-                const collisionType = theBall.getCollisionType(theObstacle);
+            this.state.obstacles.forEach(obstacle => {
+                const collisionType = theBall.getCollisionType(obstacle);
                 switch (collisionType) {
                     case CollisionType.NONE:
                         return;
@@ -388,6 +473,23 @@ class Game {
                     }
                 }
             })
+
+            this.state.killingWaters.forEach(killingWater => {
+                // Vérifier si le centre de la balle rentre dans le trou
+                const ballCenterX = theBall.position.x + theBall.size.width / 2;
+                const ballCenterY = theBall.position.y + theBall.size.height / 2;
+
+                const killingWaterCenterX = killingWater.position.x + killingWater.size.width / 2;
+                const killingWaterCenterY = killingWater.position.y + killingWater.size.height / 2;
+
+                const distanceX = ballCenterX - killingWaterCenterX;
+                const distanceY = ballCenterY - killingWaterCenterY;
+                const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+                if (distance <= killingWater.size.width / 2) {
+                    this.resetBallPosition(theBall);
+                }
+            })
         });
 
         // Ne pas écraser le tableau de balles si le niveau a changé
@@ -396,10 +498,42 @@ class Game {
         }
     }
 
+    // Réinitialise la position de la balle à sa position initiale
+    resetBallPosition(ball) {
+        ball.setPosition(
+            this.config.ball.position.x,
+            this.config.ball.position.y
+        );
+        ball.orientation = this.config.ball.orientation;
+        ball.speed = 0;
+    }
+
+    retryLevel() {
+        this.state.balls = [];
+        const ballDiamater = this.config.ball.radius * 2;
+        const ball = new Ball(
+            this.images.ball,
+            ballDiamater, ballDiamater,
+            this.config.ball.orientation,
+            this.config.ball.speed,
+            this.config.ball.maxSpeed
+        );
+        ball.setPosition(
+            this.config.ball.position.x,
+            this.config.ball.position.y
+        )
+    }
+
     updateObject() {
         // On met à jour les données du GameObject (ici seulement les balles)
         this.state.balls.forEach(theBall => {
             theBall.update();
+        })
+    }
+
+    updateMovingObstacle() {
+        this.state.obstacles.forEach(obstacle => {
+            obstacle.updateMovement(this.config.canvasSize);
         })
     }
 
@@ -520,9 +654,13 @@ class Game {
         });
 
         // Dessin des obstacles
-        this.state.obstacles.forEach(theObstacle => {
-            theObstacle.draw();
+        this.state.obstacles.forEach(obstacle => {
+            obstacle.draw();
         });
+
+        this.state.killingWaters.forEach(killingWater => {
+            killingWater.draw();
+        })
 
         // Dessin des balles 
         this.state.balls.forEach(theBall => {
@@ -543,12 +681,22 @@ class Game {
             }
         });
 
+        this.updateMovingObstacle();
+
         this.checkCollision();
         this.updateObject();
         this.renderObject();
 
         // Appel de la frame suivant
-        requestAnimationFrame(this.loop.bind(this));
+        this.animationFrameId = requestAnimationFrame(this.loop);
+    }
+
+    // Permet de cancel l'animation frame afin d'éviter l'accélération de la balle lors d'une relance de partie
+    stopLoop() {
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
     }
 
     createStartingModal() {
@@ -563,7 +711,7 @@ class Game {
 
         const numberOfPlayers = document.createElement('select')
         numberOfPlayers.id = 'number-of-players';
-        for(let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= 4; i++) {
             const option = document.createElement('option');
             option.value = i;
             option.textContent = i + (i === 1 ? ' Joueur' : ' Joueurs');
@@ -573,7 +721,7 @@ class Game {
         numberOfPlayers.addEventListener('change', (e) => {
             const selectedValue = parseInt(e.target.value, 10);
             this.players = [];
-            for(let i = 1; i <= selectedValue; i++) {
+            for (let i = 1; i <= selectedValue; i++) {
                 this.players.push({
                     id: i,
                     name: 'Joueur ' + i,
@@ -585,7 +733,6 @@ class Game {
             }
         })
 
-        modalContent.appendChild(numberOfPlayers);
 
         const startButton = document.createElement('button');
         startButton.id = 'startButton';
@@ -595,6 +742,7 @@ class Game {
         });
 
         modalContent.appendChild(title);
+        modalContent.appendChild(numberOfPlayers);
         modalContent.appendChild(startButton);
         this.menuOverlay.appendChild(modalContent);
         document.body.appendChild(this.menuOverlay);
