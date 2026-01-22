@@ -8,12 +8,14 @@ import holeImgSrc from '../assets/img/hole.png';
 import edgeImgSrc from '../assets/img/edge.png';
 import obstacleImgSrc from '../assets/img/obstacle.png';
 import killingWaterImgSrc from '../assets/img/killingWater.png'
+import treadmillImgSrc from '../assets/img/treadmill.png';
 import Ball from './Ball';
 import GameObject from './GameObject';
 import Obstacle from './Obstacle';
 import Vector from './DataType/Vector';
 import CustomMath from './CustomMath';
 import CollisionType from './DataType/CollisionType';
+import Treadmill from './Treadmill';
 import KillingWater from './KillingWater';
 
 class Game {
@@ -43,6 +45,7 @@ class Game {
                 y: 100
             }
         },
+        treadmill: [],
         edges: null,
         obstacles: [],
         killingWaters: []
@@ -69,6 +72,9 @@ class Game {
     // Canvas element
     canvas;
 
+    // Timestamp haute résolution de la boucle d'animation
+    currentLoopStamp;
+
     // Identifiant de la boucle d'animation en cours
     animationFrameId = null;
 
@@ -79,6 +85,7 @@ class Game {
     images = {
         ball: null,
         hole: null,
+        treadmill: null,
         edge: null,
         obstacle: null,
         killingWater: null
@@ -92,6 +99,8 @@ class Game {
         bouncingEdges: [],
         // Trous
         holes: [],
+        // Tapis roulant
+        treadmills: [],
         // Obstacles
         obstacles: [],
         killingWaters: [],
@@ -198,6 +207,11 @@ class Game {
         const imgKillingWater = new Image();
         imgKillingWater.src = killingWaterImgSrc;
         this.images.killingWater = imgKillingWater;
+
+        // Tapis roulant
+        const imgTreadmill = new Image();
+        imgTreadmill.src = treadmillImgSrc;
+        this.images.treadmill = imgTreadmill;
     }
 
     // Mise en place des objets du jeu sur la scene
@@ -207,6 +221,8 @@ class Game {
         this.state.bouncingEdges = [];
         this.state.holes = [];
         this.state.obstacles = [];
+        this.state.killingWaters = [];
+        this.state.treadmills = [];
 
         // Balle
         const ballDiamater = this.config.ball.radius * 2;
@@ -293,6 +309,20 @@ class Game {
             );
             this.state.killingWaters.push(killingWater);
         })
+
+        const treadmillDataList = Array.isArray(this.config.treadmills) ? this.config.treadmills : [];
+        treadmillDataList.forEach(treadmillData => {
+            const treadmill = new Treadmill(
+                this.images.treadmill,
+                treadmillData.size.width,
+                treadmillData.size.height
+            );
+            treadmill.setPosition(
+                treadmillData.position.x,
+                treadmillData.position.y
+            );
+            this.state.treadmills.push(treadmill);
+        })
     }
 
     // Crée les bordures par défaut (contours du canvas)
@@ -342,7 +372,8 @@ class Game {
             hole: { ...base.hole, ...level.hole, ...overrides.hole },
             edges: level.edges ?? overrides.edges ?? base.edges,
             obstacles: level.obstacles ?? overrides.obstacles ?? base.obstacles,
-            killingWaters: level.killingWaters ?? overrides.killingWaters ?? base.killingWaters
+            killingWaters: level.killingWaters ?? overrides.killingWaters ?? base.killingWaters,
+            treadmills: level.treadmills ?? overrides.treadmills ?? base.treadmills
         };
     }
 
@@ -508,26 +539,14 @@ class Game {
         ball.speed = 0;
     }
 
-    retryLevel() {
-        this.state.balls = [];
-        const ballDiamater = this.config.ball.radius * 2;
-        const ball = new Ball(
-            this.images.ball,
-            ballDiamater, ballDiamater,
-            this.config.ball.orientation,
-            this.config.ball.speed,
-            this.config.ball.maxSpeed
-        );
-        ball.setPosition(
-            this.config.ball.position.x,
-            this.config.ball.position.y
-        )
-    }
-
     updateObject() {
         // On met à jour les données du GameObject (ici seulement les balles)
         this.state.balls.forEach(theBall => {
             theBall.update();
+        });
+
+        this.state.treadmills.forEach(treadmill => {
+            treadmill.updateKeyFrame();
         })
     }
 
@@ -662,6 +681,11 @@ class Game {
             killingWater.draw();
         })
 
+        // Dessin des tapis roulants
+        this.state.treadmills.forEach(treadmill => {
+            treadmill.draw();
+        });
+
         // Dessin des balles 
         this.state.balls.forEach(theBall => {
             theBall.draw();
@@ -671,7 +695,9 @@ class Game {
         this.drawAimLine();
     }
 
-    loop() {
+    loop(stamp) {
+        // Enregistrement du stamp
+        this.currentLoopStamp = stamp;
         // Mise à jour des objets en mouvement
         this.state.balls.forEach(ball => {
             if (ball.speed > 0) {

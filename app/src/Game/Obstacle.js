@@ -22,12 +22,12 @@ export default class Obstacle extends MovingObject {
         const right = this.position.x + this.size.width;
         const bottom = this.position.y + this.size.height;
 
-        if (this.position.x <= 20 || right >= canvasSize.width - 20) {
+        if (this.position.x <= 21 || right >= canvasSize.width - 21) {
             this.reverseOrientationX();
             this.position.x = Math.min(Math.max(this.position.x, 0), canvasSize.width - this.size.width);
         }
 
-        if (this.position.y <= 20 || bottom >= canvasSize.height - 20) {
+        if (this.position.y <= 21 || bottom >= canvasSize.height - 21) {
             this.reverseOrientationY();
             this.position.y = Math.min(Math.max(this.position.y, 0), canvasSize.height - this.size.height);
         }
