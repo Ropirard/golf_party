@@ -312,10 +312,12 @@ class Game {
 
         const treadmillDataList = Array.isArray(this.config.treadmills) ? this.config.treadmills : [];
         treadmillDataList.forEach(treadmillData => {
+            const rotation = treadmillData.rotation ?? 0;
             const treadmill = new Treadmill(
                 this.images.treadmill,
                 treadmillData.size.width,
-                treadmillData.size.height
+                treadmillData.size.height,
+                rotation
             );
             treadmill.setPosition(
                 treadmillData.position.x,
@@ -506,18 +508,18 @@ class Game {
             })
 
             this.state.killingWaters.forEach(killingWater => {
-                // Vérifier si le centre de la balle rentre dans le trou
+                // Vérifier si la balle entre en collision avec le killingWater (détection rectangulaire)
                 const ballCenterX = theBall.position.x + theBall.size.width / 2;
                 const ballCenterY = theBall.position.y + theBall.size.height / 2;
+                const ballRadius = theBall.size.width / 2;
 
-                const killingWaterCenterX = killingWater.position.x + killingWater.size.width / 2;
-                const killingWaterCenterY = killingWater.position.y + killingWater.size.height / 2;
+                // Vérifier si le centre de la balle est dans le rectangle du killingWater
+                const isInsideX = ballCenterX >= killingWater.position.x &&
+                    ballCenterX <= killingWater.position.x + killingWater.size.width;
+                const isInsideY = ballCenterY >= killingWater.position.y &&
+                    ballCenterY <= killingWater.position.y + killingWater.size.height;
 
-                const distanceX = ballCenterX - killingWaterCenterX;
-                const distanceY = ballCenterY - killingWaterCenterY;
-                const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-
-                if (distance <= killingWater.size.width / 2) {
+                if (isInsideX && isInsideY) {
                     this.resetBallPosition(theBall);
                 }
             })

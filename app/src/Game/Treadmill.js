@@ -1,6 +1,6 @@
 import theGame from "./Game";
 import GameObject from "./GameObject";
-import MovingObject from "./MovingObject";
+import CustomMath from "./CustomMath";
 
 export default class Treadmill extends GameObject {
 
@@ -11,24 +11,41 @@ export default class Treadmill extends GameObject {
     frameRate = 20;
     spriteRate = 4;
 
+    constructor(image, width, height, rotation = 0) {
+        super(image, width, height);
+        this.rotation = rotation;
+    }
+
     draw() {
         // Utilise la taille de l'image source pour découper les 4 frames
         const sourceFrameHeight = this.image.height / this.spriteRate;
         const sourceFrameWidth = this.image.width;
         const sourceY = this.animationIndex * sourceFrameHeight;
 
+        const ctx = theGame.ctx;
+        const centerX = this.position.x + this.size.width / 2;
+        const centerY = this.position.y + this.size.height / 2;
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        if (this.rotation !== 0) {
+            ctx.rotate(CustomMath.degToRad(this.rotation));
+        }
+
         // Destination conserve la taille définie dans levels.json via this.size
-        theGame.ctx.drawImage(
+        ctx.drawImage(
             this.image,
             0,
             sourceY,
             sourceFrameWidth,
             sourceFrameHeight,
-            this.position.x,
-            this.position.y,
+            -this.size.width / 2,
+            -this.size.height / 2,
             this.size.width,
             this.size.height
         );
+
+        ctx.restore();
     }
 
     updateKeyFrame() {
