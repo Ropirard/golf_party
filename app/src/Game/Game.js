@@ -116,7 +116,9 @@ class Game {
             currentPos: new Vector(),
             power: 0,
             maxPower: 15
-        }
+        },
+        // Tracking si une balle est sur un treadmill
+        ballOnTreadmill: {}
     };
 
     constructor(customConfig = {}, levelsConfig = defaultLevels) {
@@ -511,7 +513,6 @@ class Game {
                 // Vérifier si la balle entre en collision avec le killingWater (détection rectangulaire)
                 const ballCenterX = theBall.position.x + theBall.size.width / 2;
                 const ballCenterY = theBall.position.y + theBall.size.height / 2;
-                const ballRadius = theBall.size.width / 2;
 
                 // Vérifier si le centre de la balle est dans le rectangle du killingWater
                 const isInsideX = ballCenterX >= killingWater.position.x &&
@@ -523,6 +524,51 @@ class Game {
                     this.resetBallPosition(theBall);
                 }
             })
+
+            // Collision de la balle avec les treadmills
+            let isOnTreadmill = false;
+            this.state.treadmills.forEach(treadmill => {
+                const ballCenterX = theBall.position.x + theBall.size.width / 2;
+                const ballCenterY = theBall.position.y + theBall.size.height / 2;
+
+                // Centre du treadmill
+                const treadmillCenterX = treadmill.position.x + treadmill.size.width / 2;
+                const treadmillCenterY = treadmill.position.y + treadmill.size.height / 2;
+
+                // Vecteur du centre du treadmill au centre de la balle
+                let dx = ballCenterX - treadmillCenterX;
+                let dy = ballCenterY - treadmillCenterY;
+
+                // Transformer dans l'espace du treadmill (inverser la rotation)
+                const angleRad = -CustomMath.degToRad(treadmill.rotation || 0);
+                const cosA = Math.cos(angleRad);
+                const sinA = Math.sin(angleRad);
+                const rotatedX = dx * cosA - dy * sinA;
+                const rotatedY = dx * sinA + dy * cosA;
+
+                // Vérifier si le point transformé est dans le rectangle du treadmill
+                const halfWidth = treadmill.size.width / 2;
+                const halfHeight = treadmill.size.height / 2;
+
+                if (Math.abs(rotatedX) <= halfWidth && Math.abs(rotatedY) <= halfHeight) {
+                    isOnTreadmill = true;
+                    // Ralentir la balle progressivement
+                    const slowdownFactor = 0.95; // Réduit la vitesse de 5% à chaque frame
+                    theBall.speed *= slowdownFactor;
+
+                    // Si la vitesse atteint 0, déplacer la balle selon la direction du treadmill
+                    if (theBall.speed < 0.1) {
+                        theBall.speed = 0;
+                        // Calculer la direction du treadmill selon sa rotation
+                        const treadmillRotation = CustomMath.degToRad(treadmill.rotation || 0);
+                        const moveDistance = 5; // Distance de déplacement par frame
+                        theBall.position.x -= moveDistance * Math.cos(treadmillRotation);
+                        theBall.position.y -= moveDistance * Math.sin(treadmillRotation);
+                    }
+                }
+            });
+            // Mettre à jour le tracking de la balle sur treadmill
+            this.state.ballOnTreadmill[theBall.id || 0] = isOnTreadmill;
         });
 
         // Ne pas écraser le tableau de balles si le niveau a changé
@@ -567,7 +613,9 @@ class Game {
 
             // Vérifier si on clique sur la balle
             const ball = this.state.balls[0];
-            if (ball && ball.speed === 0) {
+            const ballId = ball?.id || 0;
+            const isOnTreadmill = this.state.ballOnTreadmill[ballId] || false;
+            if (ball && ball.speed === 0 && !isOnTreadmill) {
                 // Calculer le centre de la balle
                 const ballCenterX = ball.position.x + ball.size.width / 2;
                 const ballCenterY = ball.position.y + ball.size.height / 2;

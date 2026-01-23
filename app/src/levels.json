@@ -10,7 +10,7 @@
             "orientation": 45,
             "speed": 0,
             "position": {
-                "x": 150,
+                "x": 100,
                 "y": 375
             }
         },
@@ -108,6 +108,16 @@
                 "size": {
                     "width": 260,
                     "height": 450
+                }
+            },
+            {
+                "position": {
+                    "x": 1225,
+                    "y": 130
+                },
+                "size": {
+                    "width": 50,
+                    "height": 50
                 }
             }
         ],
