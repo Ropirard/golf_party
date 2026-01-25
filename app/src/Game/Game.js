@@ -161,19 +161,35 @@ class Game {
     }
 
     initHtmlUI() {
+        // Créer un conteneur pour centrer le jeu
+        const gameContainer = document.createElement('div');
+        gameContainer.style.display = 'flex';
+        gameContainer.style.flexDirection = 'column';
+        gameContainer.style.justifyContent = 'flex-start';
+        gameContainer.style.alignItems = 'center';
+        gameContainer.style.height = '100vh';
+        gameContainer.style.paddingTop = '10px';
+        gameContainer.style.gap = '5px';
+
         this.elH1 = document.createElement('h1');
         this.elH1.textContent = 'Golf\' Party';
+        this.elH1.style.textAlign = 'center';
+        this.elH1.style.margin = '10px 0px';
+        this.elH1.style.fontSize = '36px';
 
         this.currentLevelElement = document.createElement('h1');
         const currentPlayer = this.players[this.currentPlayerIndex];
         this.currentLevelElement.textContent = 'Joueur ' + (this.currentPlayerIndex + 1) + ' - Niveau ' + (this.currentLevelIndex + 1) + ' - Coups: ' + currentPlayer.state.strokeCount + ' - Total Coups: ' + currentPlayer.state.totalStrokeCount;
-
-
+        this.currentLevelElement.style.textAlign = 'center';
+        this.currentLevelElement.style.margin = '5px 0px';
+        this.currentLevelElement.style.fontSize = '22px';
 
         const elCanvas = document.createElement('canvas');
         elCanvas.width = this.config.canvasSize.width;
         elCanvas.height = this.config.canvasSize.height;
-        document.body.append(this.elH1, this.currentLevelElement, elCanvas);
+        
+        gameContainer.append(this.elH1, this.currentLevelElement, elCanvas);
+        document.body.appendChild(gameContainer);
 
         // Récupération du contexte du canvas
         this.canvas = elCanvas;
@@ -778,12 +794,20 @@ class Game {
     createStartingModal() {
         this.menuOverlay = document.createElement('div');
         this.menuOverlay.id = 'menuOverlay';
+        this.menuOverlay.style.display = 'flex';
+        this.menuOverlay.style.flexDirection = 'column';
+        this.menuOverlay.style.justifyContent = 'flex-start';
+        this.menuOverlay.style.alignItems = 'center';
+        this.menuOverlay.style.height = '100vh';
+        this.menuOverlay.style.paddingTop = '0px';
 
         const modalContent = document.createElement('div');
         modalContent.id = 'modalContent';
 
         const title = document.createElement('h1');
         title.textContent = 'Golf\' Party';
+        title.style.margin = '10px 0px';
+        title.style.fontSize = '36px';
 
         const numberOfPlayers = document.createElement('select')
         numberOfPlayers.id = 'number-of-players';
@@ -838,16 +862,101 @@ class Game {
 
         const endModal = document.createElement('div');
         endModal.id = 'start-modal'; // On réutilise le style du start-modal
+        endModal.style.display = 'flex';
+        endModal.style.flexDirection = 'column';
+        endModal.style.justifyContent = 'flex-start';
+        endModal.style.alignItems = 'center';
+        endModal.style.height = '100vh';
+        endModal.style.paddingTop = '0px';
 
         const modalContent = document.createElement('div');
         modalContent.id = 'div-modal-content';
 
         const title = document.createElement('h1');
         title.textContent = 'Fin de la partie !';
+        title.style.textAlign = 'center';
+
+        // Créer le classement des joueurs
+        const rankingContainer = document.createElement('div');
+        rankingContainer.style.marginTop = '15px';
+        rankingContainer.style.marginBottom = '15px';
+        rankingContainer.style.textAlign = 'center';
+
+        // Créer une table HTML pour un meilleur alignement
+        const table = document.createElement('table');
+        table.style.borderCollapse = 'collapse';
+        table.style.margin = '0 auto';
+
+        // En-têtes du tableau
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        
+        const rankHeader = document.createElement('th');
+        rankHeader.style.padding = '5px 15px';
+        rankHeader.style.textAlign = 'center';
+        rankHeader.style.borderBottom = '2px solid black';
+        rankHeader.textContent = 'Rang';
+        
+        const nameHeader = document.createElement('th');
+        nameHeader.style.padding = '5px 15px';
+        nameHeader.style.textAlign = 'left';
+        nameHeader.style.borderBottom = '2px solid black';
+        nameHeader.textContent = 'Joueur';
+        
+        const coopsHeader = document.createElement('th');
+        coopsHeader.style.padding = '5px 15px';
+        coopsHeader.style.textAlign = 'right';
+        coopsHeader.style.borderBottom = '2px solid black';
+        coopsHeader.textContent = 'Coups';
+        
+        headerRow.appendChild(rankHeader);
+        headerRow.appendChild(nameHeader);
+        headerRow.appendChild(coopsHeader);
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Corps du tableau
+        const tbody = document.createElement('tbody');
+        
+        // Trier les joueurs par total de coups (ascendant)
+        const sortedPlayers = [...this.players].sort((a, b) => a.state.totalStrokeCount - b.state.totalStrokeCount);
+
+        // Afficher le classement
+        sortedPlayers.forEach((player, index) => {
+            const row = document.createElement('tr');
+            
+            const rankCell = document.createElement('td');
+            rankCell.style.padding = '5px 15px';
+            rankCell.style.textAlign = 'center';
+            rankCell.style.fontWeight = index === 0 ? 'bold' : 'normal';
+            rankCell.textContent = index === 0 ? '🏆' : (index + 1);
+            
+            const nameCell = document.createElement('td');
+            nameCell.style.padding = '5px 15px';
+            nameCell.style.textAlign = 'left';
+            nameCell.style.fontWeight = index === 0 ? 'bold' : 'normal';
+            nameCell.textContent = player.name;
+            
+            const coopsCell = document.createElement('td');
+            coopsCell.style.padding = '5px 15px';
+            coopsCell.style.textAlign = 'right';
+            coopsCell.style.fontWeight = index === 0 ? 'bold' : 'normal';
+            coopsCell.textContent = player.state.totalStrokeCount;
+            
+            row.appendChild(rankCell);
+            row.appendChild(nameCell);
+            row.appendChild(coopsCell);
+            tbody.appendChild(row);
+        });
+        
+        table.appendChild(tbody);
+        rankingContainer.appendChild(table);
 
         const backToMenu = document.createElement('button');
         backToMenu.id = 'buttonStart';
         backToMenu.textContent = 'MENU PRINCIPAL';
+        backToMenu.style.display = 'block';
+        backToMenu.style.margin = '8px auto';
         backToMenu.addEventListener('click', () => {
             // Supprimer le endingModal
             endModal.remove();
@@ -865,6 +974,8 @@ class Game {
         const restartButton = document.createElement('button');
         restartButton.id = 'buttonStart';
         restartButton.textContent = 'REJOUER';
+        restartButton.style.display = 'block';
+        restartButton.style.margin = '8px auto';
         restartButton.addEventListener('click', () => {
             // Supprimer le endingModal
             endModal.remove();
@@ -879,7 +990,7 @@ class Game {
             this.start();
         });
 
-        modalContent.append(title, backToMenu, restartButton);
+        modalContent.append(title, rankingContainer, backToMenu, restartButton);
         endModal.appendChild(modalContent);
         document.body.appendChild(endModal);
     }

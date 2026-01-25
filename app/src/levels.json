@@ -164,7 +164,7 @@
                     "width": 400,
                     "height": 80
                 },
-                "isMoving": true
+                "isMoving": false
             },
             {
                 "position": {
@@ -175,12 +175,12 @@
                     "width": 400,
                     "height": 80
                 },
-                "isMoving": true
+                "isMoving": false
             }
         ]
     },
 
-     {
+    {
         "id": 3,
         "canvasSize": {
             "width": 1500,
