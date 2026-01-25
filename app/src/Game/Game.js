@@ -72,6 +72,9 @@ class Game {
     // Canvas element
     canvas;
 
+    // Conteneur principal du jeu
+    gameContainer = null;
+
     // Timestamp haute résolution de la boucle d'animation
     currentLoopStamp;
 
@@ -161,6 +164,12 @@ class Game {
     }
 
     initHtmlUI() {
+        // Nettoyer un éventuel conteneur précédent
+        if (this.gameContainer) {
+            this.gameContainer.remove();
+            this.gameContainer = null;
+        }
+
         // Créer un conteneur pour centrer le jeu
         const gameContainer = document.createElement('div');
         gameContainer.style.display = 'flex';
@@ -190,6 +199,9 @@ class Game {
         
         gameContainer.append(this.elH1, this.currentLevelElement, elCanvas);
         document.body.appendChild(gameContainer);
+
+        // Conserver une référence pour pouvoir le retirer à la fin de partie
+        this.gameContainer = gameContainer;
 
         // Récupération du contexte du canvas
         this.canvas = elCanvas;
@@ -850,15 +862,13 @@ class Game {
 
     createEndingModal() {
         // Supprimer le titre "Golf' Party"
-        if (this.elH1) {
-            this.elH1.remove();
-            this.elH1 = null;
+        if (this.gameContainer) {
+            this.gameContainer.remove();
+            this.gameContainer = null;
         }
-        // Supprimer les infos de niveau et coups
-        if (this.currentLevelElement) {
-            this.currentLevelElement.remove();
-            this.currentLevelElement = null;
-        }
+        // Nettoyer les références UI pour éviter de manipuler des éléments supprimés
+        this.elH1 = null;
+        this.currentLevelElement = null;
 
         const endModal = document.createElement('div');
         endModal.id = 'start-modal'; // On réutilise le style du start-modal
